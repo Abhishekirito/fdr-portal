@@ -24,7 +24,7 @@
 ---
 
 ## 📑 Table of Contents
-1. [Recent Major Updates & Enhancements](#-recent-major-updates--enhancements)
+1. [Project Overview: What, Why & How](#-project-overview-what-why--how)
 2. [End-to-End Workflow](#-end-to-end-workflow)
 3. [Technical Architecture](#-technical-architecture)
 4. [User Roles & Feature Breakdown](#-user-roles--feature-breakdown)
@@ -39,59 +39,86 @@
 
 ---
 
-## 🚀 Recent Major Updates & Enhancements
+## 📌 Project Overview: What, Why & How
 
-* **Regional Verification Officer (RVO) FDR Rejection Feature**:
-  - **Statutory Rejection Capability**: RVOs and Bureau Heads can now formally reject non-compliant FDR submissions directly from the verification queue.
-  - **Preset Discrepancy Chips**: Rejection modal includes quick statutory discrepancy presets (amount mismatch, maturity lock-in breach, non-joint lien endorsement, illegible scan, invalid bank branch) plus an editable remarks textarea.
-  - **Cryptographic & Database Sync**: Rejection marks instrument status as `rejected`, flags as `HIGH_RISK`, writes discrepancy notes into verification records, appends a cryptographically signed SHA-256 block (`REJECT_INSTRUMENT`) to the immutable audit chain, and writes to live PostgreSQL.
-  - **Instant Role-Scoped Alert**: Dispatches a high-priority `VERIFICATION_REJECTED` notification to the technical institution with discrepancy details and rectification guidance.
-  - **Separation of Duties Hard Barrier**: Super Admin and Finance Officers are strictly barred (`HTTP 403 Forbidden`) from executing rejections; only L1 Verification Officers and Bureau Heads can reject.
-  - **Rejection Notice Banner on Details Page**: Prominent warning banner on the instrument detail view informing viewers of the statutory rejection grounds and instructions for resubmitting rectified documents.
+### 1. Project Description
+The **AICTE Security Deposit & Fixed Deposit Receipt (FDR) Management Portal** is a production-grade, cloud-native governance platform built for the **All India Council for Technical Education (AICTE) Regulation Bureau**. It establishes a centralized, digital custodian architecture for managing thousands of mandatory institution security deposits and Fixed Deposit Receipts (FDRs) across India's technical universities, engineering colleges, polytechnics, and management institutions.
 
-* **Deduplication of Document Viewers**:
-  - Eliminated the redundant inline `(view document)` text link in the RVO verification queue, consolidating document inspection under the primary, prominent **`Inspect FDR Scan`** button with the `Eye` icon and full modal preview (`DocumentViewerModal.tsx`).
+By combining **dual-model Groq AI document intelligence**, **two-tier regional statutory verification workflows**, **cryptographic SHA-256 tamper-evident audit chains**, **automated maturity tracking**, and **strict Separation of Duties (SoD)**, the portal transforms paper-intensive, fragmented physical deposit custody into an automated, transparent, and auditable digital lifecycle.
 
-* **Session Awareness & Seamless Dashboard Navigation**:
-  - **Smart Session Awareness**: Unauthenticated visitors see direct "Institution Login" & "Officer Login" options on the landing page, while authenticated users receive "Resume Session" / "Go to Dashboard" without false redirects.
-  - **Session-Preserving "Back to Dashboard"**: Replaced hardcoded links with role-aware routing (`/institution/dashboard`, `/officer/dashboard`, or `/admin/dashboard`) and history preservation, preventing accidental sign-outs when navigating back from instrument detail pages.
+---
 
-* **Dual-Model Groq AI Configuration (`GROQ_CHAT_MODEL` & `GROQ_OCR_MODEL`)**:
-  - **Environment-Level Model Selection**: Full configuration in `.env.local` to select distinct, optimized models independently for the AI Copilot Assistant and Document OCR Extraction.
-  - **Conversational Copilot Engine (`GROQ_CHAT_MODEL`)**: Defaulted to `openai/gpt-oss-120b` (Flagship 120B reasoning model with 131,072 context window for deep statutory, APH, and regulatory reasoning). Also supports `qwen/qwen3.8-27b`, `openai/gpt-oss-20b`, or `llama-3.3-70b-versatile`.
-  - **Optical Document OCR Engine (`GROQ_OCR_MODEL`)**: Defaulted to `qwen/qwen3.8-27b` (Ultra-fast 400ms high-throughput model specialized for structured JSON extraction and parsing). Also supports `openai/gpt-oss-120b` or `openai/gpt-oss-20b`.
-  - **Automatic Fallback Chain**: If a selected model experiences rate limiting or restrictions, the gateway cascades through alternative candidates before engaging the autonomous local role-memory engine.
-  - **Live Configuration Route (`/api/ai/config`)**: Exposes configured active models and diagnostic telemetry to client interfaces.
+### 2. Why We Built It (The Problem & Statutory Context)
 
-* **AICTE Regulatory Copilot (Groq AI Chatbot with Role-Specific Memory Access)**:
-  - Replaced the fixed single-turn block with an interactive, floating & dockable **Conversational Chatbot Assistant** (`AiChatbot.tsx`).
-  - Integrated with **Groq AI** for ultra-fast, contextual statutory assistance, with dynamic model badges in the header and message bubbles.
-  - **Strict Role-Specific Memory Isolation & Zero Cross-Data Leakage**:
-    - **Technical Institutions**: Strictly bounded to their own college's instruments, maturity dates, and release requests. Inquiries probing other colleges, internal officer review queues, or admin logs are blocked with explicit statutory privacy denials.
-    - **Regional Verification Officers (Tier-1)**: Restricted strictly to their assigned region's intake queue, OCR discrepancy forensics, and document verification checks. Cross-region inquiries are rejected under jurisdictional boundary controls.
-    - **Regional Finance Officers (Tier-2)**: Restricted strictly to their assigned region's verified active deposit volume, bank distribution, and Tier-2 lien release endorsements.
-    - **Regulation Bureau Heads**: Restricted to executive release NOC sanction, high-risk discrepancy appeals, and regional compliance velocity.
-    - **Central Compliance Officers**: Authorized for national cross-regional duplicate FDR number collisions, bank concentration exposure, and low-trust institution forensics.
-    - **Super Administrators**: Focused on SHA-256 Merkle audit chain integrity proofs, database sync telemetry, and officer MFA compliance audits.
-  - Features multi-turn conversation memory, live streaming typing indicator, role-tailored prompt chips, floating interactive chatbot drawer, and 1-click access from the main navigation bar.
+Under the **AICTE Approval Process Handbook (APH)**, every technical education institution seeking AICTE approval, establishing a new campus, or introducing new academic programs is legally required to deposit financial security in the form of a **Fixed Deposit Receipt (FDR)** pledged jointly to the **Member Secretary, AICTE** and the institution's authorized representative for a mandatory lock-in period (typically 8 to 10 years).
 
-* **FDR Document Upload with File Size Limit & Groq AI OCR Auto-Fill**:
-  - **File Upload & Size Limit**: Technical institutions can upload scanned FDR certificates (`.pdf`, `.png`, `.jpg`, `.jpeg`) with strict client and server-side **5 MB file size limit** enforcement.
-  - **Groq AI OCR Auto-Fill**: Uploaded documents are automatically analyzed by Groq AI OCR to extract bank name, FDR receipt number, principal amount, issue date, maturity date, and joint lien title, auto-populating the form fields.
-  - **Manual Review & Failure Fallback**: Institutions can manually verify and edit any auto-populated value. If the OCR engine cannot extract all fields with certainty, the portal prompts the user to enter the details manually and proceed with submission.
-  - **Universal Document Viewer (`DocumentViewerModal.tsx`)**: Uploaded documents are securely attached to the instrument and are viewable in-browser with download capabilities by **both the Technical Institution** (via dashboard and detail pages) and **Regional Officers** (directly in the Verification Queue side-by-side diff viewer and inspection console).
+#### Critical Pain Points in the Legacy Ecosystem:
+* **Physical Certificate Vulnerability**: Across 10,000+ technical institutions nationwide, paper FDR receipts and bank confirmation letters were physically mailed to regional offices. Certificates suffered from transit loss, physical degradation, misplaced filing cabinet archives, and zero real-time visibility.
+* **Untracked Maturities & Dormant Funds**: With 8 to 10-year lock-in durations, manual tracking of expiry dates across diverse banks led to deposits maturing unnoticed, lying dormant without interest optimization, or auto-renewing without AICTE's explicit statutory review.
+* **Verification Bottlenecks & Human Error**: Regional officers manually inspected complex bank receipts and ledger stamps. Typographical errors in deposit numbers, discrepancies between pledged amounts, and missing joint lien endorsements frequently slipped through.
+* **Cross-Regional Fraud & Multi-Pledging**: Without a unified national registry, malicious entities could theoretically pledge the same FDR certificate number across multiple regional offices or state councils without detection.
+* **Delayed Institutional Refunds**: When institutions fulfilled their statutory lock-in terms and qualified for deposit release, the physical paper routing through regional offices, finance bureaus, and executive signatories took months, tying up substantial institutional working capital.
+* **Lack of Immutable Audit Proofs**: Traditional relational database logs could be retroactively altered or deleted by database administrators without leaving cryptographic evidence.
 
-* **Dedicated Authentication Gateways (No Hero Popup)**:
-  - Replaced the homepage modal popup with dedicated, role-specific portals:
-    - **Technical Institutions Portal (`/login/institution`)**: Streamlined 1-step direct authentication for colleges & polytechnics with institution guidance cards.
-    - **Regulatory Officers Directorate (`/login/officer`)**: Enforces mandatory **2-Step TOTP Multi-Factor Authentication (MFA)** for official `@aicte.gov.in` accounts.
-    - **Central Dual-Portal Gateway (`/login`)**: Displays an authoritative choice interface upon signing out or accessing protected routes directly.
+---
 
-* **Dedicated Role-Scoped Notification Architecture**:
-  - Replaced shared generic notifications with strictly isolated, role-specific notification desks with priority tiering, category tags, quick filters (`All`, `Action Required`, `Unread`), and deep action links.
+### 3. What We Built (The Solution & Core Features)
 
-* **Live Supabase PostgreSQL Cloud Integration**:
-  - Connected directly to live Supabase Cloud PostgreSQL with connection pooling, automatic schema fallback, and real-time live connection telemetry in the top navigation bar.
+We built an end-to-end, multi-tier regulatory and financial custody platform engineered with modern web standards and deep regulatory compliance:
+
+* **Dual-Model Groq AI Document Intelligence**:
+  - **Optical OCR Extraction Engine (`GROQ_OCR_MODEL`)**: Uses `qwen/qwen3.8-27b` for sub-second (~400ms) structured JSON extraction of key FDR fields: Issuing Bank, FDR Receipt Number, Principal Amount, Issue Date, Maturity Date, Branch Name, and Joint Lien Clause.
+  - **Conversational Regulatory Copilot (`GROQ_CHAT_MODEL`)**: Powered by `openai/gpt-oss-120b` (Flagship 120B reasoning model with a 131K context window) to provide instant statutory guidance on APH clauses, deposit calculations, and anomaly resolution with **strict role-specific memory isolation and zero cross-jurisdiction leakage**.
+* **Two-Tier Regional Verification & Statutory Rejection Desk**:
+  - **Tier-1 Regional Verification Officer (RVO)**: Inspects uploaded scans side-by-side with OCR extraction diffs, verifies joint lien clauses, and validates certificate authenticity.
+  - **Statutory Rejection Capability**: RVOs can formally reject non-compliant submissions directly from the verification queue with preset discrepancy chips (*Amount Mismatch*, *Maturity Lock-in Breach*, *Missing Joint Lien Endorsement*, *Unscheduled Bank Branch*), generating statutory discrepancy notices and high-risk alerts.
+  - **Tier-2 Regional Finance Officer (RFO)**: Reconciles bank confirmation advice letters, conducts financial audits, and confirms active custody.
+* **Automated Maturity Monitoring & Renewal Lineage Tree**:
+  - Scheduled background monitors trigger automated alerts **30, 20, and 15 days** prior to deposit maturity.
+  - **Interactive Renewal Chain Tree (`RenewalChainTree.tsx`)**: Visually charts hierarchical parent-child instrument relationships across multi-year renewals, tracking accumulated principal, interest reinvestment, and institutional lineage.
+* **Cryptographic SHA-256 Tamper-Evident Audit Ledger**:
+  - Every action (`CREATE`, `VERIFY`, `REJECT`, `RENEW`, `RELEASE_REQUEST`, `APPROVE_RELEASE`, `SETTLE`) generates a SHA-256 block containing `prev_hash`, payload state diffs, actor identity, and UTC timestamp.
+  - Built-in mathematical chain verification validates the entire historical sequence; any out-of-band database tampering is immediately exposed with exact index and block identification.
+* **Digital Release NOC & Encrypted Settlement**:
+  - Automated release audit ensures completion of mandatory lock-in terms.
+  - Generates an official, digitally signed **No Objection Certificate (NOC)** with RSA-2048 cryptographic signatures and QR verification.
+  - Tracks issuing bank fund credits with institutional UTR/Credit Advice upload and finance officer settlement closure.
+* **Strict Checks & Balances: Separation of Duties (SoD)**:
+  - Enforces hard **HTTP 403 Forbidden** barriers preventing IT Super Admins from verifying, rejecting, or approving financial deposits.
+  - Operational actions require accredited Regional Verification and Finance Officers.
+* **Dedicated Authentication Gateways & Role-Scoped Notification Desks**:
+  - Separate authentication portals for Technical Institutions (direct institutional access) and Regulatory Officers (mandatory **2-Step TOTP Multi-Factor Authentication**).
+  - Role-isolated notification centers delivering tailored statutory alerts, action triggers, and audit memos without cross-role clutter.
+
+---
+
+### 4. How It Works (End-to-End Operational Lifecycle)
+
+The portal coordinates the full lifecycle of an institutional security deposit across structured stages:
+
+```
+┌─────────────────────────┐      ┌──────────────────────────┐      ┌─────────────────────────┐
+│   1. INTAKE & OCR       │ ───► │  2. REGIONAL SCRUTINY    │ ───► │  3. ACTIVE CUSTODY      │
+│ Institution uploads     │      │ Tier-1 RVO verifies or   │      │ Live PostgreSQL ledger, │
+│ scan; Groq AI extracts  │      │ rejects with preset chips│      │ 30/20/15-day automated │
+│ metadata & flags diffs  │      │ Tier-2 RFO confirms lien │      │ maturity monitoring     │
+└─────────────────────────┘      └──────────────────────────┘      └────────────┬────────────┘
+                                                                                │
+┌─────────────────────────┐      ┌──────────────────────────┐                   │
+│   5. REFUND SETTLEMENT  │ ◄─── │  4. DIGITAL RELEASE NOC  │ ◄─────────────────┘
+│ Bank credits funds,     │      │ Lock-in verified, Bureau │  (Upon Maturity or
+│ institution uploads     │      │ Head signs digital NOC,  │   Chained Renewal)
+│ UTR, ledger archived    │      │ RSA-2048 cryptoseal      │
+└─────────────────────────┘      └──────────────────────────┘
+```
+
+1. **Intake & Automated Extraction**: The institution uploads an official scanned FDR certificate (PDF/PNG/JPG <= 5MB). The Groq AI OCR engine extracts all key values and compares declared amounts against scanned data, flagging anomalies for review.
+2. **Two-Tier Regional Scrutiny**: The Regional Verification Officer (RVO) reviews the side-by-side diff. If valid, the RVO endorses the joint lien. If defective, the RVO issues an immediate statutory rejection notice. Next, the Regional Finance Officer (RFO) reconciles the bank's confirmation letter.
+3. **Active Custody & Maturity Tracking**: Verified deposits enter active custody with a cryptographic audit block recorded. The system's background scheduler continuously tracks maturity horizons, notifying colleges at 30, 20, and 15 days before maturity.
+4. **Renewal or Release**:
+   - *Renewal*: The college submits a renewed FDR linked directly to the parent instrument, preserving historical lineage.
+   - *Release*: Upon satisfying the statutory lock-in period, the college initiates a release request audited by the RFO and authorized with an executive digital NOC signed by the Bureau Head.
+5. **Bank Settlement & Closure**: The issuing bank releases funds back to the institution. The college uploads bank credit proof (UTR/Advice), and the Finance Officer marks the deposit as fully refunded and archived in the immutable ledger.
 
 ---
 
