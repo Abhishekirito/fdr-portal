@@ -99,7 +99,7 @@
 
 <div align="center">
   <img
-    src="resource/Workflow.png"
+    src="resource/Workflow_image.png"
     alt="workflow"
     width="100%"
   />
