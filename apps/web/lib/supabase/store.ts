@@ -156,8 +156,10 @@ class DataStore {
   getUserFromRequest(request?: Request): Profile | null {
     if (request) {
       const cookieHeader = request.headers.get('cookie') || '';
+      const tokenMatch = cookieHeader.match(/sb-access-token=([^;]+)/);
       const match = cookieHeader.match(/aicte_current_profile_id=([^;]+)/);
-      if (match && match[1] && match[1].trim() !== '') {
+      // Require both cryptographic session token and profile ID
+      if (tokenMatch && match && match[1] && match[1].trim() !== '') {
         const profileId = decodeURIComponent(match[1].trim());
         const found = this.profiles.find(p => p.id === profileId);
         if (found) {

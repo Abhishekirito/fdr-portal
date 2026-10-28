@@ -29,8 +29,17 @@ export function middleware(request: NextRequest) {
 
   if (isProtected) {
     const profileId = request.cookies.get('aicte_current_profile_id')?.value;
-    if (!profileId) {
-      return NextResponse.redirect(new URL('/login', request.url));
+    const sessionToken = request.cookies.get('sb-access-token')?.value;
+
+    // Cryptographic session validation: require both authenticated session token and profile ID
+    if (!profileId || !sessionToken) {
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      // Purge any stale or forged plain cookies
+      if (profileId && !sessionToken) {
+        response.cookies.set('aicte_current_profile_id', '', { path: '/', maxAge: 0 });
+        response.cookies.set('aicte_user_role', '', { path: '/', maxAge: 0 });
+      }
+      return response;
     }
 
     const roleCookie = request.cookies.get('aicte_user_role')?.value as UserRole | undefined;
