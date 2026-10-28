@@ -1,3 +1,12 @@
+<div align="center">
+  <img
+    src="resource/Aicte_logo.png"
+    alt="AICTE Security Deposit and FDR Management Portal"
+    width="100%"
+  />
+</div>
+
+
 # AICTE Security Deposit & FDR Management Portal
 
 [![AICTE Regulation Bureau](https://img.shields.io/badge/AICTE-Regulation%20Bureau-0f2b48.svg)](https://www.aicte-india.org)
@@ -87,6 +96,14 @@
 ---
 
 ## 🔄 End-to-End Workflow
+
+<div align="center">
+  <img
+    src="resource/workflow.png"
+    alt="workflow"
+    width="100%"
+  />
+</div>
 
 The portal digitizes and automates the complete multi-year lifecycle of an educational institution's security deposit across 7 structured phases:
 
