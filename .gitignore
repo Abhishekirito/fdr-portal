@@ -18,6 +18,13 @@ out/
 build/
 dist/
 
+# Scratch & temporary testing files
+scratch/
+scripts/
+apps/web/scripts/
+test-*.mjs
+apps/web/test-*.mjs
+
 # Environment files
 .env
 .env*.local

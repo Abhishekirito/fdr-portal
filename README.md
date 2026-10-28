@@ -6,7 +6,6 @@
   />
 </div>
 
-
 # AICTE Security Deposit & FDR Management Portal
 
 [![AICTE Regulation Bureau](https://img.shields.io/badge/AICTE-Regulation%20Bureau-0f2b48.svg)](https://www.aicte-india.org)
