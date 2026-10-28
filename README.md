@@ -1,6 +1,6 @@
 <div align="center">
   <img
-    src="resource/Aicte_logo.png"
+    src="resource/AICTE_logo.png"
     alt="AICTE Security Deposit and FDR Management Portal"
     width="100%"
   />
@@ -99,7 +99,7 @@
 
 <div align="center">
   <img
-    src="resource/workflow.png"
+    src="resource/Workflow.png"
     alt="workflow"
     width="100%"
   />
